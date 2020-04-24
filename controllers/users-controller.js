@@ -1,5 +1,5 @@
 const HttpError = require("../model/http-error");
-const uuid = require("uuid/v4");
+const { v4: uuidv4 } = require("uuid");
 const { validationResult } = require("express-validator");
 
 let DUMMY_USERS = [
@@ -37,7 +37,7 @@ const signup = (req, res, next) => {
   }
 
   const newUser = {
-    id: uuid(),
+    id: uuidv4(),
     name,
     email,
     password,
