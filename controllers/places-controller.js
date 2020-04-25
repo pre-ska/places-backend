@@ -2,6 +2,7 @@ const HttpError = require("../model/http-error");
 const { v4: uuidv4 } = require("uuid");
 const { validationResult } = require("express-validator");
 const getCoordsForAddress = require("../util/location");
+const Place = require("../model/place");
 
 let DUMMY_PLACES = [
   {
@@ -39,26 +40,59 @@ let DUMMY_PLACES = [
   },
 ];
 
-const getPlaceById = (req, res, next) => {
+const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
-  const place = DUMMY_PLACES.find(p => p.id === placeId);
+  // const place = DUMMY_PLACES.find(p => p.id === placeId);
 
-  if (!place) {
-    throw new HttpError("Could not find a place with that ID", 404);
+  //9-5 findById() je staticna metoda iz mongoosa
+  // ne koristi se na instanci modela!!! vec na samom konstraktoru!!!!
+  // znaci ne na "new Place" vec direktno na "Place"
+  // ova metoda ne vraca promise...ako zelim promise moram napraviti Place.findById().exac()
+  let place;
+  try {
+    place = await Place.findById(placeId);
+  } catch (err) {
+    const error = new HttpError("Something went wrong", 500);
+    return next(error);
   }
 
-  res.json({ place: place });
+  // ovaj error je ako ne mogu pronaci taj ID u DB...
+  //prethodni error iz try/catch je ako nesto nevalja sa zahtjevom, netom itd...
+  if (!place) {
+    const error = new HttpError("Could not find a place with that ID", 404);
+    return next(error);
+  }
+
+  // place koji dobijem je spcialni mongoose objekt
+  // da bi ga preveo u obicni JS obj trebam .toObject()
+  // osim toga id mi je _id...prevescu ga u obicni id sa { getters: true}
+  // sve spicajne stvari iz monggoosa su maknute sa .toObject() ukljucujuci i _id...pa sa getterom to popravim
+
+  res.json({ place: place.toObject({ getters: true }) });
 };
 
-const getPlacesByUserId = (req, res, next) => {
+const getPlacesByUserId = async (req, res, next) => {
+  // slicno kao i "getPlaceById"
   const userId = req.params.uid;
-  const places = DUMMY_PLACES.filter(u => u.creator === userId);
+
+  let places;
+  try {
+    // u MongoDB find() vrati cursor!!... pointer
+    // u mongoose vrati array</cursor!!>
+    places = await Place.find({ creator: userId });
+  } catch (err) {
+    const error = new HttpError(
+      "Fetching places failed. Please try again later",
+      500
+    );
+    return next(error);
+  }
 
   if (!places || places.length === 0) {
     return next(new HttpError("Could not find places with that user ID", 404)); // verzija sa next ...kao primjer...mogao je i throw error
   }
 
-  res.json({ places: places });
+  res.json({ places: places.map(place => place.toObject({ getters: true })) });
 };
 
 const createPlace = async (req, res, next) => {
@@ -78,16 +112,38 @@ const createPlace = async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
-  const createdPlace = {
+
+  // const createdPlace = {
+  //   title,
+  //   description,
+  //   location: coordinates,
+  //   address,
+  //   creator,
+  //   id: uuidv4(),
+  // };
+  // DUMMY_PLACES.push(createdPlace);
+
+  //9-4
+  const createdPlace = new Place({
     title,
     description,
-    location: coordinates,
     address,
+    location: coordinates,
+    image:
+      "https://www.askideas.com/media/39/Aerial-View-Of-Empire-State-Building-Picture.jpg",
     creator,
-    id: uuidv4(),
-  };
+  });
 
-  DUMMY_PLACES.push(createdPlace);
+  try {
+    //9-4 save je metoda iz mongoose... kreirao sam model pomocu mongoosa pa koristim njegove static metode
+    await createdPlace.save();
+  } catch (err) {
+    const error = new HttpError(
+      "Creating place failed. Please try again.",
+      500
+    );
+    return next(error); // nemogu throw error jer je async kod...i moram return
+  }
 
   res.status(201).json({ place: createdPlace });
 };

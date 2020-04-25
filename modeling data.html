@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <style>
+      body {
+        margin: 50px;
+        padding-top: 50px;
+        font-size: 20px;
+      }
+
+      h1 {
+        text-align: center;
+      }
+      li {
+        margin-left: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>--------------------------9---------------------</h1>
+    <h1>SPAJANJE NA ATLAS</h1>
+    <h3>app.js</h3>
+    <li>napravim <b>mongoose.connect</b> sa stringom iz atlasa</li>
+    <li>
+      po pravilu sam trebao koristiti ENV varijable u <b>config.env</b> fajlu,
+      ali za ovaj mali projekt to necu
+    </li>
+
+    <h1>MODELING Places 9-4</h1>
+    <i></i>
+
+    <h3>place.js --- /model</h3>
+    <li>napravim <b>placeSchema</b></li>
+    <li>exportiram <b>Place</b> model</li>
+
+    <h3>places-controller.js -- kreiranje novog dokumenta</h3>
+    <i> createPlace</i>
+    <li>require <b>Place</b> model.... to mi je constructor funkcija</li>
+    <li>
+      napravim novi model za <b>cretedPlace</b> sa <b>Place</b> constructorom
+    </li>
+    <li>
+      u try catch koristim metodu iz mongoose <b>save()</b> da snimim dokument u
+      db (Atlas)
+    </li>
+    <li>spremam u db, pa mi je to async funkcija</li>
+    <i>getPlaceById - opisano u kodu</i><br />
+    <i>getPlacesByUserId - opisano u kodu</i>
+  </body>
+</html>
