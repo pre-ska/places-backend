@@ -1,22 +1,21 @@
 const HttpError = require("../model/http-error");
-const { v4: uuidv4 } = require("uuid");
 const { validationResult } = require("express-validator");
 const User = require("../model/user");
 
-let DUMMY_USERS = [
-  {
-    id: "u1",
-    name: "test",
-    email: "test@email.com",
-    password: "test",
-  },
-  {
-    id: "u2",
-    name: "test2",
-    email: "test2@email.com",
-    password: "test",
-  },
-];
+// let DUMMY_USERS = [
+//   {
+//     id: "u1",
+//     name: "test",
+//     email: "test@email.com",
+//     password: "test",
+//   },
+//   {
+//     id: "u2",
+//     name: "test2",
+//     email: "test2@email.com",
+//     password: "test",
+//   },
+// ];
 
 const getUsers = async (req, res, next) => {
   // ovo vrati sve dokumente iz kolekcije iz Atlasa
@@ -75,7 +74,7 @@ const signup = async (req, res, next) => {
     email,
     password,
     image: "https://www.w3schools.com/howto/img_avatar.png",
-    places: [], // promjenio u 9-14
+    places: [],
   });
 
   // DUMMY_USERS.push(newUser);

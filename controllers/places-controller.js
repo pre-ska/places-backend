@@ -3,42 +3,44 @@ const { v4: uuidv4 } = require("uuid");
 const { validationResult } = require("express-validator");
 const getCoordsForAddress = require("../util/location");
 const Place = require("../model/place");
+const User = require("../model/user"); //9-14...traba mi za creator polje u createPlace
+const mongoose = require("mongoose");
 
-let DUMMY_PLACES = [
-  {
-    id: "p1",
-    title: "Empire state building",
-    description: "bla bla bla",
-    location: {
-      lat: 40.7484474,
-      lng: -73.9871516,
-    },
-    address: "20 W 34th St, New York, NY 10001",
-    creator: "u1",
-  },
-  {
-    id: "p5",
-    title: "Empire state building",
-    description: "bla bla bla",
-    location: {
-      lat: 40.7484474,
-      lng: -73.9871516,
-    },
-    address: "20 W 34th St, New York, NY 10001",
-    creator: "u1",
-  },
-  {
-    id: "p2",
-    title: "Empire state building",
-    description: "bla bla bla",
-    location: {
-      lat: 40.7484474,
-      lng: -73.9871516,
-    },
-    address: "20 W 34th St, New York, NY 10001",
-    creator: "u2",
-  },
-];
+// let DUMMY_PLACES = [
+//   {
+//     id: "p1",
+//     title: "Empire state building",
+//     description: "bla bla bla",
+//     location: {
+//       lat: 40.7484474,
+//       lng: -73.9871516,
+//     },
+//     address: "20 W 34th St, New York, NY 10001",
+//     creator: "u1",
+//   },
+//   {
+//     id: "p5",
+//     title: "Empire state building",
+//     description: "bla bla bla",
+//     location: {
+//       lat: 40.7484474,
+//       lng: -73.9871516,
+//     },
+//     address: "20 W 34th St, New York, NY 10001",
+//     creator: "u1",
+//   },
+//   {
+//     id: "p2",
+//     title: "Empire state building",
+//     description: "bla bla bla",
+//     location: {
+//       lat: 40.7484474,
+//       lng: -73.9871516,
+//     },
+//     address: "20 W 34th St, New York, NY 10001",
+//     creator: "u2",
+//   },
+// ];
 
 const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
@@ -78,7 +80,7 @@ const getPlacesByUserId = async (req, res, next) => {
   let places;
   try {
     // u MongoDB find() vrati cursor!!... pointer
-    // u mongoose vrati array</cursor!!>
+    // u mongoose vrati array
     places = await Place.find({ creator: userId });
   } catch (err) {
     const error = new HttpError(
@@ -134,9 +136,41 @@ const createPlace = async (req, res, next) => {
     creator,
   });
 
+  /* 9-15******************************************/
+
+  // provjeri dali postoji kreator u DB
+  let user;
   try {
-    //9-4 save je metoda iz mongoose... kreirao sam model pomocu mongoosa pa koristim njegove static metode
-    await createdPlace.save();
+    user = await User.findById(creator);
+  } catch (err) {
+    const error = new HttpError(
+      "Creating place failed. Please try again.",
+      500
+    );
+    return next(error);
+  }
+
+  if (!user) {
+    const error = new HttpError("Could not find user for provided ID", 500);
+    return next(error);
+  }
+
+  // prvo kreiram session i pokrenem transakciju
+  // spremim novi place u DB
+  // u istom sessionu dodam u usera u njegovo polje "places" novo kreirani dokument ID
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await createdPlace.save({ session: sess });
+    //push je mongoose metoda
+    // mongoDb automatski uzme ID od novog place i ubaci ga u array od usera pod "places"
+    //samo ID ce ubacit jer sam tak odefinirao u Schemi...mada ovdje pusham cijeli objekt
+    // sve ovo je u 9-15
+    //ako ovo radim prvi puta i nema kolekciju... moram kolekciju rucno kreirati
+    user.places.push(createdPlace);
+
+    await user.save({ session: sess });
+    await sess.commitTransaction();
   } catch (err) {
     const error = new HttpError(
       "Creating place failed. Please try again.",
@@ -201,7 +235,10 @@ const deletePlace = async (req, res, next) => {
   // prvo dohvatim place pa ga onda obrisem...svaki put sa try/catch
   let place;
   try {
-    place = await Place.findById(placeId);
+    // place = await Place.findById(placeId);
+    //9-16 populate daje mogucnost referiranja na dokument iz druge kolekcije i obradu tog dokumenta
+    // za to mi treba relacija...a to je napravljeno u schemi (ref)
+    place = await Place.findById(placeId).populate("creator");
   } catch (err) {
     const error = new HttpError(
       "Something went wrong. Could not find place with that ID",
@@ -210,8 +247,21 @@ const deletePlace = async (req, res, next) => {
     return next(error);
   }
 
+  if (!place) {
+    const error = new HttpError("Could not find place for this ID ", 404);
+    return next(error);
+  }
+
+  // 9-16 radim session kao i za createPlace
   try {
-    place.remove();
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+    await place.remove({ session: sess });
+    //pull metoda ukloni ID iz arraya...ne moram expicitno pisati sta da ukloni
+    place.creator.places.pull(place);
+    // koristim pull i save na creator-u jer zbog "populate()" imam puni user objekt kao link
+    await place.creator.save({ session: sess });
+    await sess.commitTransaction();
   } catch (err) {
     const error = new HttpError(
       "Something went wrong. Could not delete place",
