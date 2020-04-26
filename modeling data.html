@@ -56,7 +56,36 @@
     <h3>user.js --- /model</h3>
     <li>napravim schema kao i za place.js</li>
     <li>dodatno instaliram mongoose-unique-validator za email</li>
-    <li>u user-controller importiram User model</li>
+    <h3>user-controller.js</h3>
+    <li>importiram User model</li>
     <i>signup - opisano u kodu</i><br />
+    <i>login - opisano u kodu</i><br />
+    <i>getUsers - opisano u kodu</i><br />
+    <h1>relacija izmedju places i users</h1>
+    <li>jedan user moze kreirati multi places</li>
+    <li>place ima samo jednog kreatora</li>
+    <h3>place.js</h3>
+    <li>
+      u Schemi za kreatora zamjenim stari type string sa mongoose.Type.ObjectId
+    </li>
+    <li>dodam jos i ref: 'User'</li>
+    <li>
+      to je link na model na koji zelim napraviti referencu...ne moram
+      importirati model sa require....
+    </li>
+    <h3>user.js</h3>
+    <li>
+      slicno kao i u prethodnom, za <b>places</b> propery dodam mongoose type
+      objectId samo sto mi je ovdje ARRAY od IDjeva a ne objekt kao u place.js
+    </li>
+    <h3>user-controller.js</h3>
+    <li>
+      dodatno moram i zamjeniti stari dummy kod kad kreiram usera. Prije sam za
+      <b>places</b> imao samo dummy string...sada tu stavim array u model
+    </li>
+    <li>
+      taj array je prazan jer kada kreiram korisnika, taj korisnik jos nije
+      dodao niti jedan place
+    </li>
   </body>
 </html>

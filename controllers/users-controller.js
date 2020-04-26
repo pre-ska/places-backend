@@ -18,8 +18,19 @@ let DUMMY_USERS = [
   },
 ];
 
-const getUsers = (req, res, next) => {
-  res.json({ users: DUMMY_USERS });
+const getUsers = async (req, res, next) => {
+  // ovo vrati sve dokumente iz kolekcije iz Atlasa
+  //trebam samo email i name ...ne zelim password
+  let users;
+  try {
+    users = await User.find({}, "-password");
+  } catch (error) {
+    return next(
+      new HttpError("Fetching users failed. Please try again later", 500)
+    );
+  }
+
+  res.json({ users: users.map(user => user.toObject({ getters: true })) });
 };
 
 const signup = async (req, res, next) => {
@@ -31,7 +42,7 @@ const signup = async (req, res, next) => {
     );
   }
 
-  const { name, email, password, places } = req.body;
+  const { name, email, password } = req.body; // maknio places u 9-14
 
   // const hasUser = DUMMY_USERS.find(u => u.email === email);
   // if (hasUser) {
@@ -64,7 +75,7 @@ const signup = async (req, res, next) => {
     email,
     password,
     image: "https://www.w3schools.com/howto/img_avatar.png",
-    places,
+    places: [], // promjenio u 9-14
   });
 
   // DUMMY_USERS.push(newUser);
