@@ -36,7 +36,8 @@ app.use((error, req, res, next) => {
 
 mongoose
   .connect(
-    "mongodb+srv://psp:JRAzWlQFfapeKuTl@cluster0-jyywc.mongodb.net/places?retryWrites=true&w=majority"
+    "mongodb+srv://psp:JRAzWlQFfapeKuTl@cluster0-jyywc.mongodb.net/places?retryWrites=true&w=majority",
+    { useNewUrlParser: true, useUnifiedTopology: true }
   )
   .then(() => {
     app.listen(5000);
