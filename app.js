@@ -10,6 +10,24 @@ const app = express();
 
 app.use(bodyParser.json()); // ovo mi formatira req.body u citljiv oblik
 
+//10-5 CORS fix ... browser odbija prihvatit response od servera ako taj response ne sadrzi odredjene headere
+// tako da u ovom koraku dodajem odredjene headere NA SVAKI RESPONSE... tj. na res objekt
+app.use((req, res, next) => {
+  //ovo dozvoljava bilo kojoj domeni da posalje request...mogao sam umjesto * staviti localhost:3000 (frontent server)...ali u ovom slucaju dopustam svim domenama da posalju request
+  res.setHeader("Access-Control-Allow-Origin", "*");
+
+  //ovo postavlja koji headeri mogu biti u requestu...i koji ce biti obradjeni
+  //prva dva su automatski postavljena od browsera
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+
+  //koje metode requesta su dozvoljene
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE");
+  next();
+});
+
 //places rute
 app.use("/api/places", placesRoutes);
 
@@ -36,7 +54,7 @@ app.use((error, req, res, next) => {
 
 mongoose
   .connect(
-    "mongodb+srv://psp:JRAzWlQFfapeKuTl@cluster0-jyywc.mongodb.net/places?retryWrites=true&w=majority",
+    "mongodb+srv://psp:JRAzWlQFfapeKuTl@cluster0-jyywc.mongodb.net/mern?retryWrites=true&w=majority",
     { useNewUrlParser: true, useUnifiedTopology: true }
   )
   .then(() => {

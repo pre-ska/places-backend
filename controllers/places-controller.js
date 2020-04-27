@@ -90,7 +90,8 @@ const getPlacesByUserId = async (req, res, next) => {
     return next(error);
   }
 
-  if (!places || places.length === 0) {
+  // if (!places || places.length === 0) {
+  if (!places) {
     return next(new HttpError("Could not find places with that user ID", 404)); // verzija sa next ...kao primjer...mogao je i throw error
   }
 
