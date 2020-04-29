@@ -20,7 +20,7 @@ module.exports = (req, res, next) => {
     }
 
     //u jwt sam spremio userId i email...sada taj ID dodam na req
-    const decodedToken = jwt.verify(token, "secret_dont_share");
+    const decodedToken = jwt.verify(token, process.env.JWT_KEY);
     //sada svaki middleware poslije ovoga moze znati koji je UserId ... ko je poslao req
     req.userData = { userId: decodedToken.userId };
 

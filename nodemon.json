@@ -1,0 +1,9 @@
+{
+  "env": {
+    "DB_USER": "psp",
+    "DB_PASSWORD": "JRAzWlQFfapeKuTl",
+    "DB_NAME": "mern",
+    "GOOGLE_API_KEY": "AIzaSyDaojBoI616HR-a7v1qsNIIqgNhpdielC8",
+    "JWT_KEY": "secret_dont_share"
+  }
+}
