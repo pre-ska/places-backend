@@ -1,3 +1,6 @@
+const fs = require("fs");
+const path = require("path");
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const HttpError = require("./model/http-error");
@@ -9,6 +12,10 @@ const usersRoutes = require("./routes/users-routes");
 const app = express();
 
 app.use(bodyParser.json()); // ovo mi formatira req.body u citljiv oblik
+
+//11-8 za dohvatit slike
+//static samo return fajlove, ne executira ih
+app.use("/uploads/images", express.static(path.join("uploads", "images")));
 
 //10-5 CORS fix ... browser odbija prihvatit response od servera ako taj response ne sadrzi odredjene headere
 // tako da u ovom koraku dodajem odredjene headere NA SVAKI RESPONSE... tj. na res objekt
@@ -40,8 +47,18 @@ app.use((req, res, next) => {
   throw error;
 });
 
-// ako midleware ima 4 argumenta, express je tretira kao error handleing midleware function
+//generalni error
+// ako midleware ima 4 argumenta, express ga tretira kao error handleing midleware function
 app.use((error, req, res, next) => {
+  //11-7 multer dodaje file prop na request
+  // ako imam error, zelim izbrisati taj file ...jer nesto nije valjalo
+  if (req.file) {
+    // ovo  brise image sa servera
+    fs.unlink(req.file.path, err => {
+      console.log(err);
+    });
+  }
+
   if (res.headerSent) {
     // ako je response vec poslan
     return next(error);

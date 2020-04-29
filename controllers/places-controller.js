@@ -5,42 +5,8 @@ const getCoordsForAddress = require("../util/location");
 const Place = require("../model/place");
 const User = require("../model/user"); //9-14...traba mi za creator polje u createPlace
 const mongoose = require("mongoose");
-
-// let DUMMY_PLACES = [
-//   {
-//     id: "p1",
-//     title: "Empire state building",
-//     description: "bla bla bla",
-//     location: {
-//       lat: 40.7484474,
-//       lng: -73.9871516,
-//     },
-//     address: "20 W 34th St, New York, NY 10001",
-//     creator: "u1",
-//   },
-//   {
-//     id: "p5",
-//     title: "Empire state building",
-//     description: "bla bla bla",
-//     location: {
-//       lat: 40.7484474,
-//       lng: -73.9871516,
-//     },
-//     address: "20 W 34th St, New York, NY 10001",
-//     creator: "u1",
-//   },
-//   {
-//     id: "p2",
-//     title: "Empire state building",
-//     description: "bla bla bla",
-//     location: {
-//       lat: 40.7484474,
-//       lng: -73.9871516,
-//     },
-//     address: "20 W 34th St, New York, NY 10001",
-//     creator: "u2",
-//   },
-// ];
+const fs = require("fs");
+const jwt = require("jsonwebtoken");
 
 const getPlaceById = async (req, res, next) => {
   const placeId = req.params.pid;
@@ -107,7 +73,7 @@ const createPlace = async (req, res, next) => {
     );
   }
 
-  const { title, description, address, creator } = req.body;
+  const { title, description, address } = req.body;
 
   let coordinates;
   try {
@@ -132,9 +98,8 @@ const createPlace = async (req, res, next) => {
     description,
     address,
     location: coordinates,
-    image:
-      "https://www.askideas.com/media/39/Aerial-View-Of-Empire-State-Building-Picture.jpg",
-    creator,
+    image: req.file.path,
+    creator: req.userData.userId,
   });
 
   /* 9-15******************************************/
@@ -142,7 +107,7 @@ const createPlace = async (req, res, next) => {
   // provjeri dali postoji kreator u DB
   let user;
   try {
-    user = await User.findById(creator);
+    user = await User.findById(req.userData.userId);
   } catch (err) {
     const error = new HttpError(
       "Creating place failed. Please try again.",
@@ -212,6 +177,16 @@ const updatePlace = async (req, res, next) => {
     return next(error);
   }
 
+  //12-10 creator je mongoose objectId... moram ga konvertat u string...
+  // toString() ima svaki mongoose objekt
+  if (place.creator.toString() !== req.userData.userId) {
+    const error = new HttpError(
+      "You don't have permission to edit this place",
+      401
+    );
+    return next(error);
+  }
+
   place.title = title;
   place.description = description;
 
@@ -253,6 +228,18 @@ const deletePlace = async (req, res, next) => {
     return next(error);
   }
 
+  //12-11
+  if (place.creator.id !== req.userData.userId) {
+    const error = new HttpError(
+      "You don't have permission to delete this place",
+      401
+    );
+    return next(error);
+  }
+
+  //11-10
+  const imagePath = place.image;
+
   // 9-16 radim session kao i za createPlace
   try {
     const sess = await mongoose.startSession();
@@ -270,6 +257,11 @@ const deletePlace = async (req, res, next) => {
     );
     return next(error);
   }
+
+  //11-10
+  fs.unlink(imagePath, err => {
+    console.log("image deleted after delete place", err);
+  });
 
   // if (!DUMMY_PLACES.find(p => p.id === placeId)) {
   //   throw new HttpError("No place with that ID", 404);

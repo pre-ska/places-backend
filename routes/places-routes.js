@@ -1,5 +1,8 @@
 const express = require("express");
 const { check } = require("express-validator");
+const fileUpload = require("../middleware/file-upload"); //11-9
+
+const checkAuth = require("../middleware/check-auth"); //12-7
 
 const placesControllers = require("../controllers/places-controller");
 
@@ -10,8 +13,13 @@ router.get("/:pid", placesControllers.getPlaceById);
 
 router.get("/user/:uid", placesControllers.getPlacesByUserId);
 
+//prva dva request su otvorena svima
+//odavde pa nadalje, svi requestovi moraju biti authenticated (jwt token)
+router.use(checkAuth);
+
 router.post(
   "/",
+  fileUpload.single("image"),
   [
     check("title").not().isEmpty(),
     check("description").isLength({ min: 5 }),

@@ -1,6 +1,9 @@
 const HttpError = require("../model/http-error");
 const { validationResult } = require("express-validator");
 const User = require("../model/user");
+const jwt = require("jsonwebtoken");
+
+const bcrypt = require("bcryptjs");
 
 // let DUMMY_USERS = [
 //   {
@@ -62,18 +65,27 @@ const signup = async (req, res, next) => {
 
   //ako imam taj email u DB
   if (existingUser) {
-    const error = new HttpError(
+    const _error = new HttpError(
       "User exist already. Please login instead",
       422
     );
+    return next(_error);
+  }
+
+  let hashedPassword;
+  try {
+    hashedPassword = await bcrypt.hash(password, 12);
+  } catch (err) {
+    const error = new HttpError("Could not create user", 500);
+
     return next(error);
   }
 
   const createdUser = new User({
     name,
     email,
-    password,
-    image: "https://www.w3schools.com/howto/img_avatar.png",
+    password: hashedPassword,
+    image: req.file.path,
     places: [],
   });
 
@@ -86,7 +98,22 @@ const signup = async (req, res, next) => {
     return next(error);
   }
 
-  res.status(201).json({ user: createdUser.toObject({ getters: true }) });
+  let token;
+  //svaki monoose objekt kreiran ima getter za ID
+  try {
+    token = jwt.sign(
+      { userId: createdUser.id, email: createdUser.email },
+      "secret_dont_share",
+      { expiresIn: "1h" }
+    );
+  } catch (err) {
+    const error = new HttpError("Signing up failed no#3", 500);
+    return next(error);
+  }
+
+  res
+    .status(201)
+    .json({ userId: createdUser.id, email: createdUser.email, token: token });
 };
 
 const login = async (req, res, next) => {
@@ -105,18 +132,45 @@ const login = async (req, res, next) => {
   try {
     existingUser = await User.findOne({ email: email });
   } catch (err) {
-    const error = new HttpError("Login in failed", 500);
+    const error = new HttpError("Logging in failed", 500);
     return next(error);
   }
 
-  if (!existingUser || existingUser.password !== password) {
-    const error = new HttpError("Invalid credentials", 401);
+  if (!existingUser) {
+    const error = new HttpError("Invalid credentials", 403);
+    return next(error);
+  }
+
+  let isValidPassword = false;
+  try {
+    isValidPassword = await bcrypt.compare(password, existingUser.password);
+  } catch (err) {
+    const error = new HttpError("Could not login user", 500);
+    return next(error);
+  }
+
+  if (!isValidPassword) {
+    const err = new HttpError("Invalid credentials", 401);
+    return next(err);
+  }
+
+  let token;
+  //svaki monoose objekt kreiran ima getter za ID
+  try {
+    token = jwt.sign(
+      { userId: existingUser.id, email: existingUser.email },
+      "secret_dont_share",
+      { expiresIn: "1h" }
+    );
+  } catch (err) {
+    const error = new HttpError("Logging in failed no#3", 500);
     return next(error);
   }
 
   res.json({
-    message: "Logged in",
-    user: existingUser.toObject({ getters: true }),
+    userId: existingUser.id,
+    email: existingUser.email,
+    token: token,
   });
 };
 
