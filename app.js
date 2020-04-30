@@ -15,7 +15,7 @@ app.use(bodyParser.json()); // ovo mi formatira req.body u citljiv oblik
 
 //11-8 za dohvatit slike
 //static samo return fajlove, ne executira ih
-app.use("/uploads/images", express.static(path.join("uploads", "images")));
+// app.use("/uploads/images", express.static(path.join("uploads", "images")));
 
 //10-5 CORS fix ... browser odbija prihvatit response od servera ako taj response ne sadrzi odredjene headere
 // tako da u ovom koraku dodajem odredjene headere NA SVAKI RESPONSE... tj. na res objekt

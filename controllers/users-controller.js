@@ -44,7 +44,7 @@ const signup = async (req, res, next) => {
     );
   }
 
-  const { name, email, password } = req.body; // maknio places u 9-14
+  const { name, email, password, image } = req.body; // maknio places u 9-14
 
   // const hasUser = DUMMY_USERS.find(u => u.email === email);
   // if (hasUser) {
@@ -85,7 +85,7 @@ const signup = async (req, res, next) => {
     name,
     email,
     password: hashedPassword,
-    image: req.file.path,
+    image: image,
     places: [],
   });
 
@@ -110,7 +110,7 @@ const signup = async (req, res, next) => {
     const error = new HttpError("Signing up failed no#3", 500);
     return next(error);
   }
-
+  console.log("ide response nakon uspjesnog signupa");
   res
     .status(201)
     .json({ userId: createdUser.id, email: createdUser.email, token: token });

@@ -1,6 +1,6 @@
 const express = require("express");
 const { check } = require("express-validator");
-const fileUpload = require("../middleware/file-upload"); //11-9
+// const fileUpload = require("../middleware/file-upload"); //11-9
 
 const checkAuth = require("../middleware/check-auth"); //12-7
 
@@ -19,7 +19,7 @@ router.use(checkAuth);
 
 router.post(
   "/",
-  fileUpload.single("image"),
+  // fileUpload.single("image"),
   [
     check("title").not().isEmpty(),
     check("description").isLength({ min: 5 }),
