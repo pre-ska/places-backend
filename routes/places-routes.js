@@ -8,7 +8,7 @@ const placesControllers = require("../controllers/places-controller");
 
 const router = express.Router();
 
-// ovaj path "/" se nastavlja na filter u app.js "/api/places" -> za ovaj router
+// ovaj path "....." se nastavlja na filter u app.js "/api/places" -> za ovaj router
 router.get("/:pid", placesControllers.getPlaceById);
 
 router.get("/user/:uid", placesControllers.getPlacesByUserId);

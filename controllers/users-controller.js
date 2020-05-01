@@ -110,10 +110,15 @@ const signup = async (req, res, next) => {
     const error = new HttpError("Signing up failed no#3", 500);
     return next(error);
   }
-  console.log("ide response nakon uspjesnog signupa");
+
   res
     .status(201)
-    .json({ userId: createdUser.id, email: createdUser.email, token: token });
+    .json({
+      userId: createdUser.id,
+      email: createdUser.email,
+      token: token,
+      avatar: createdUser.image,
+    });
 };
 
 const login = async (req, res, next) => {
@@ -170,6 +175,7 @@ const login = async (req, res, next) => {
   res.json({
     userId: existingUser.id,
     email: existingUser.email,
+    avatar: existingUser.image,
     token: token,
   });
 };

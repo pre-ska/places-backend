@@ -43,11 +43,11 @@ const getPlacesByUserId = async (req, res, next) => {
   // slicno kao i "getPlaceById"
   const userId = req.params.uid;
 
-  let places;
+  let otherUserPlaces;
   try {
     // u MongoDB find() vrati cursor!!... pointer
     // u mongoose vrati array
-    places = await Place.find({ creator: userId });
+    otherUserPlaces = await User.findById(userId).populate("places");
   } catch (err) {
     const error = new HttpError(
       "Fetching places failed. Please try again later",
@@ -57,11 +57,15 @@ const getPlacesByUserId = async (req, res, next) => {
   }
 
   // if (!places || places.length === 0) {
-  if (!places) {
+  if (!otherUserPlaces) {
     return next(new HttpError("Could not find places with that user ID", 404)); // verzija sa next ...kao primjer...mogao je i throw error
   }
 
-  res.json({ places: places.map(place => place.toObject({ getters: true })) });
+  res.json({
+    places: otherUserPlaces.places.map(place =>
+      place.toObject({ getters: true })
+    ),
+  });
 };
 
 const createPlace = async (req, res, next) => {
@@ -260,9 +264,7 @@ const deletePlace = async (req, res, next) => {
   }
 
   //11-10
-  fs.unlink(imagePath, err => {
-    console.log("image deleted after delete place", err);
-  });
+  fs.unlink(imagePath, err => {});
 
   // if (!DUMMY_PLACES.find(p => p.id === placeId)) {
   //   throw new HttpError("No place with that ID", 404);
