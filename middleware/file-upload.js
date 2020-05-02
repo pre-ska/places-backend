@@ -9,6 +9,9 @@ const MIME_TYPE_MAP = {
   "image/jpeg": "jpeg",
 };
 
+/*
+  NE KORSITIM VISE ZBOG FIREBASE STORAGEA!!!!!!!!!!!!
+*/
 const fileUpload = multer({
   limits: 500000,
   storage: multer.diskStorage({
